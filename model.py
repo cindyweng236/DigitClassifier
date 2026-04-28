@@ -65,8 +65,8 @@ def buildModel(activation, optimizer):
     return model
 
 
-# Compare function (NOW uses augmentation)
-def compare(cmpOpt, params):
+# Compare function
+def compare(cmpOpt, params, augmented):
     histories = {}
 
     for param in params: 
@@ -77,23 +77,74 @@ def compare(cmpOpt, params):
         else:
             model = buildModel(activation=param, optimizer='adam')
 
-        history = model.fit(
-            datagen.flow(x_train, y_train, batch_size=32),
-            epochs=10,
-            validation_data=(x_test, y_test),
-            steps_per_epoch=len(x_train)//32,
-            verbose=1
-        )
+        if(augmented):
+            history = model.fit(
+                datagen.flow(x_train, y_train, batch_size=32),
+                epochs=10,
+                validation_data=(x_test, y_test),
+                steps_per_epoch=len(x_train)//32,
+                verbose=1
+            )
+        else:
+            history = model.fit(
+                x_train, y_train,
+                epochs=10,
+                batch_size=32,
+                validation_data=(x_test, y_test),
+                verbose=1
+            )
 
         histories[param] = history
 
     return histories
 
+# =========================
+# Compare Data Augmentation Impact
+# Note: Activation and optimizer are fixed (adam + relu)
+# Unaugmented
+hist_no_aug = compare(True, ['adam'], False)
+
+# Augmented 
+hist_aug = compare(True, ['adam'], True)
+
+# Accuracy Comparison
+plt.figure()
+
+plt.plot(hist_no_aug['adam'].history['val_accuracy'],
+        linestyle='--',
+        label='No Augmentation')
+
+plt.plot(hist_aug['adam'].history['val_accuracy'],
+        label='With Augmentation')
+
+plt.title("Effect of Data Augmentation on Validation Accuracy")
+plt.xlabel("Epoch")
+plt.ylabel("Validation Accuracy")
+plt.legend()
+plt.savefig("data_augmentation_validation_accuracy_comparison.png")
+plt.close()
+
+# Loss Comparison
+plt.figure()
+
+plt.plot(hist_no_aug['adam'].history['val_loss'],
+        linestyle='--',
+        label='No Augmentation')
+
+plt.plot(hist_aug['adam'].history['val_loss'],
+        label='With Augmentation')
+
+plt.title("Effect of Data Augmentation on Validation Loss")
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+plt.legend()
+plt.savefig("data_augmentation_validation_loss_comparison.png")
+plt.close()
 
 # =========================
-# Compare Optimizers
+# Compare Optimizers (Unaugmented)
 optimizers = ['adam', 'rmsprop', 'sgd']
-opt_histories = compare(True, optimizers)
+opt_histories = compare(True, optimizers, False)
 
 plt.figure()
 for opt in opt_histories:
@@ -117,9 +168,9 @@ plt.close()
 
 
 # =========================
-# Compare Activations
+# Compare Activations (Unaugmented)
 activations = ['relu', 'sigmoid', 'leaky_relu']
-act_histories = compare(False, activations)
+act_histories = compare(False, activations, False)
 
 plt.figure()
 for act in act_histories:
