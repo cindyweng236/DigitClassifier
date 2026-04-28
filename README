@@ -1,0 +1,109 @@
+# MNIST Digit Classifier & Training Dynamics Analysis
+
+## Overview
+This project implements a Convolutional Neural Network (CNN) for handwritten digit classification using the MNIST dataset. Beyond classification, it is designed as an experimental framework to analyze how different optimizers and activation functions, as well as data augmentation affect the model's training behaviours.
+
+## Features
+- CNN model built with TensorFlow using Python.
+- Comparison of optimizers: Adam, RMSprop, SGD
+- Comparison of activation functions: Relu, Sigmoid, Leaky Relu
+- Data augmentation using real-time image transformations
+- Visualization of training dynamics (accuracy and loss curves)
+
+## Experiments
+
+### 1. Optimizer Comparison
+Note, data augmentation is not used in optimizer comparisons.
+Evaluates convergence speed and validation performance(accuracy and loss) across:
+- Adam
+- RMSprop
+- SGD
+
+### 2. Activation Function Comparison
+Note, data augmentation is not used in activation function comparisons.
+Evaluates convergence speed and validation performance(accuracy and loss) across:
+- Sigmoid
+- Relu-based functions (Relu, Leaky-Relu)
+
+### 3. Data Augmentation Study
+Analyzes impact on:
+- validation accuracy
+- validation loss
+
+## Key Observations & Analysis
+- Effect of Data Augmentation
+    Comparing models trained with the Adam optimizer and Relu activation function, the model trained with data augmentation demonstrates improved validation accuracy compared to the baseline model without augmentation. This improvement is generally consistent across training epochs, with minor fluctuations.
+
+    Similarly, the augmented model achieves lower validation loss throughout most epochs, with a small exception around epoch 4 where a slight deviation is observed.
+
+    Overall, these results indicate that data augmentation improves model generalization. By introducing transformations such as rotation, width and height shifts, and zooming, the model is exposed to a greater input variability, which reduces overfitting and improves performance on unseen data.
+
+- Optimizer Comparison (Adam, RMSprop, SGD) 
+    In terms of validation accuracy, both Adam and RMSprop achieve approximately 99% accuracy from the first epoch, with relatively small improvements across subsequent epochs. In contrast, SGD starts with a lower accuracy of around 92% and gradually increases to approximately 98% by the 10th epoch, which remains slightly lower than the performance of Adam and RMSprop.
+
+    In terms of validation loss, Adam and RMSprop start at approximately 0.05 and show only minor improvements over training, indicating early convergence. In comparison, SGD starts with a significantly higher loss (>0.25) but shows consistent improvement throughout training, eventually reaching a similar loss value of approximately 0.05.
+
+    This difference is mainly due to how the optimization algorithms update model parameters during training. Adam and RMSprop use adaptive learning rates, meaning they adjust the step size for each parameter based on recent gradient statistics. Adam additionally incorporates momentum, which helps smooth updates and accelerates convergence.
+
+    On the other hand, SGD uses a fixed learning rate and does not adapt updates per parameter. This results in slower convergence but more gradual and stable learning dynamics. As a result, SGD continues improving over more epochs but requires longer training to reach performance levels comparable to adaptive optimizers.
+
+- Activation Function Comparison (Relu, Sigmoid, Leaky-Relu)
+    In terms of validation accuracy, Relu and Leaky Relu demonstrate better overall performance. Both start at approximately 98% accuracy and gradually improve to around 99% by the end of 10 epochs, with Leaky Relu showing a slight but consistent advantage with minor exceptions. In contrast, Sigmoid starts with a lower validation accuracy of approximately 94%. However, it improves steadily throughout training and eventually reaches around 98.5%, narrowing the gap with Relu-based models.
+
+    In the validation loss comparison, Relu and Leaky Relu also show stronger initial performance, with loss decreasing from approximately 0.06 to 0.04. Sigmoid, on the other hand, starts with a significantly higher loss (>0.18), but demonstrates consistent improvements during training and eventually converges to a similar loss value of approximately 0.04.
+
+    These behaviours can be explained by the mathematical properties of Relu-based and sigmoid activation functions. Relu-based functions achieve better initial performance because they mitigate the vanishing gradient problem associated with sigmoid. For sigmoid, when inputs are very positive or very negative, the function saturates and its derivative becomes close to zero. During backpropagation, gradients are multiplied across layers, so these small values shrink exponentially, making weight updates less effective. Additionally, the maximum gradient of sigmoid is only 0.25, which further slows learning.
+
+    In contrast, Relu-based functions do not saturate in the positive region and have a constant gradient of 1 when the input is greater than zero. This allows gradients to propagate more effectively, leading to faster and more efficient weight updates during training. Although Relu has zero gradient for negative inputs, variants such as Leaky Relu alleviate this issue by allowing a small gradient when inputs are negative.
+
+    Despite its limitations, sigmoid still demonstrates steady improvement because its gradients are small but not zero in many regions. As a result, weight updates continue to accumulate over multiple training iterations, allowing the model to gradually improve validation accuracy.
+
+    Regarding validation loss, activation functions influence optimization through the chain rule in backpropagation. Since the gradient of the loss depends on the derivative of the activation function, the same reasoning applies: Relu-based functions enable stronger gradient based updates on weights, leading to faster reduction in loss, while sigmoid results in slower but consistent convergence.
+
+## Results Summary
+- Data augmentation: 
+    Data augmentation exposes the model to a greater variety of input data, improving generalization. This is reflected in higher validation accuracy and lower validation loss compared to the baseline model.
+
+- Optimizer comparison: 
+    Adam and RMSprop converge faster due to their use of adaptive learning rates, which adjust the step size for each parameter based on gradient information, leading to more efficient optimization.
+
+- Activation function comparison: 
+    Relu-based functions demonstrate stronger initial performance in both validation accuracy and loss because they avoid the vanishing gradient problem associated with sigmoid. Their non-saturating behavior in the positive region allows for more effective gradient flow, resulting in faster and more efficient weight updates.
+
+## How to Run?
+- Step1: install dependencies (run the following command in bash)
+    pip install tensorflow matplotlib numpy
+
+- Step2: run model.py
+
+## Tech Stack
+- Model
+    Python, TensorFlow, NumPy
+- Graphing 
+    Matplotlib
+- Data 
+    MNIST dataset
+
+## References
+### Dataset
+- LeCun, Y. et al. (1998). The MNIST Database of Handwritten Digits.
+
+### Official Documentation
+- TensorFlow Documentation: https://www.tensorflow.org/
+- TensorFlow CNN Tutorial: https://www.tensorflow.org/tutorials/images/cnn
+- TensorFlow Data Augmentation: https://www.tensorflow.org/tutorials/images/data_augmentation
+
+### Optimization & Backpropagation
+- https://explained.ai/matrix-calculus/
+- https://www.geeksforgeeks.org/machine-learning/backpropagation-in-neural-network/
+- https://www.kaggle.com/code/harpdeci/intuitive-explanation-of-sgd-adam-and-rmsprop
+
+### Activation Functions & CNNs
+- https://www.geeksforgeeks.org/machine-learning/activation-functions-neural-networks/
+- https://www.geeksforgeeks.org/computer-vision/what-is-data-augmentation-how-does-data-augmentation-work-for-images/
+- https://www.geeksforgeeks.org/machine-learning/introduction-convolution-neural-network/
+
+### Video Resources
+- https://www.youtube.com/watch?v=Ilg3gGewQ5U
+- https://www.youtube.com/watch?v=bte8Er0QhDg
+- https://www.youtube.com/watch?v=DaixewJTF8k
