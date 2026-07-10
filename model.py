@@ -24,6 +24,29 @@ datagen = ImageDataGenerator(
 )
 datagen.fit(x_train)
 
+def mcDropoutPrediction(model, x, T=50):
+    """
+    Perform T stochastic forward passes.
+
+    Returns:
+        mean_prediction
+        uncertainty (variance)
+    """
+
+    predictions = []
+
+    for _ in range(T):
+        pred = model(x, training=True)   # <-- Dropout stays ON
+        predictions.append(pred.numpy())
+
+    predictions = np.array(predictions)
+
+    mean_prediction = predictions.mean(axis=0)
+    variance = predictions.var(axis=0)
+
+    return mean_prediction, variance
+    
+
 # Model builder (fixed for LeakyReLU)
 def buildModel(activation, optimizer):
 
