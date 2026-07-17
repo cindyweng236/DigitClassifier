@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow.keras import layers, models
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Load data
 mnist = tf.keras.datasets.mnist
@@ -25,18 +26,10 @@ datagen = ImageDataGenerator(
 datagen.fit(x_train)
 
 def mcDropoutPrediction(model, x, T=50):
-    """
-    Perform T stochastic forward passes.
-
-    Returns:
-        mean_prediction
-        uncertainty (variance)
-    """
-
     predictions = []
 
     for _ in range(T):
-        pred = model(x, training=True)   # <-- Dropout stays ON
+        pred = model(x, training=True)
         predictions.append(pred.numpy())
 
     predictions = np.array(predictions)
@@ -91,6 +84,7 @@ def buildModel(activation, optimizer):
 # Compare function
 def compare(cmpOpt, params, augmented):
     histories = {}
+    mdls = {}
 
     for param in params: 
         print("Training with:", param)
@@ -118,17 +112,18 @@ def compare(cmpOpt, params, augmented):
             )
 
         histories[param] = history
+        mdls[param] = model
 
-    return histories
+    return histories, mdls
 
 # =========================
 # Compare Data Augmentation Impact
 # Note: Activation and optimizer are fixed (adam + relu)
 # Unaugmented
-hist_no_aug = compare(True, ['adam'], False)
+hist_no_aug, model_no_aug = compare(True, ['adam'], False)
 
 # Augmented 
-hist_aug = compare(True, ['adam'], True)
+hist_aug, model_aug = compare(True, ['adam'], True)
 
 # Accuracy Comparison
 plt.figure()
@@ -167,7 +162,7 @@ plt.close()
 # =========================
 # Compare Optimizers (Unaugmented)
 optimizers = ['adam', 'rmsprop', 'sgd']
-opt_histories = compare(True, optimizers, False)
+opt_histories, opt_models = compare(True, optimizers, False)
 
 plt.figure()
 for opt in opt_histories:
@@ -193,7 +188,7 @@ plt.close()
 # =========================
 # Compare Activations (Unaugmented)
 activations = ['relu', 'sigmoid', 'leaky_relu']
-act_histories = compare(False, activations, False)
+act_histories, act_models = compare(False, activations, False)
 
 plt.figure()
 for act in act_histories:
@@ -213,4 +208,59 @@ plt.xlabel("Epoch")
 plt.ylabel("Loss")
 plt.legend()
 plt.savefig("activation_loss_comparison.png")
+plt.close()
+
+#=========================
+#MC Dropout 
+
+#train model 50 different time with random dropout units picked. 
+mean_pred, variance = mcDropoutPrediction(
+    model_no_aug['adam'],
+    x_test,
+    T=50
+)
+
+predictions = np.argmax(mean_pred, axis=1)
+accuracy = np.mean(predictions == y_test)
+print("MC Dropout Accuracy:", accuracy)
+
+#create entropy graph
+uncertainty = variance.mean(axis=1)
+entropy = -np.sum(
+    mean_pred * np.log(mean_pred + 1e-10),
+    axis=1
+)
+plt.figure()
+plt.hist(entropy, bins=40)
+plt.xlabel("Predictive Entropy")
+plt.ylabel("Count")
+plt.title("MC Dropout Predictive Entropy")
+plt.savefig("mc_dropout_entropy.png")
+plt.close()
+
+#create variance graph (for correct/incorrect prediction class)
+correct = predictions == y_test
+
+plt.figure()
+
+plt.hist(
+    uncertainty[correct],
+    bins=40,
+    alpha=0.6,
+    label="Correct"
+)
+
+plt.hist(
+    uncertainty[~correct],
+    bins=40,
+    alpha=0.6,
+    label="Incorrect"
+)
+
+plt.xlabel("Predictive Variance")
+plt.ylabel("Count")
+plt.title("MC Dropout Uncertainty")
+plt.legend()
+
+plt.savefig("mc_dropout_uncertainty.png")
 plt.close()
